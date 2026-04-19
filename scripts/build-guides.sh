@@ -29,6 +29,7 @@ SOURCES=(
     "devops_guides/port-forwarding-guide.md|firewalld Port Forwarding: Host → VM"
     "devops_guides/Samba-Setup-for-Windows-on-KVM.md|Samba Share: Fedora Host ↔ Windows KVM"
     "devops_guides/AD_Exc_setup.md|Windows AD + Exchange Lab on KVM"
+    "observability/README.md|Observability Stack: Grafana + InfluxDB + Telegraf"
     "scripts/Fedora-Server-Hardening-script.sh|Fedora 43 Server Hardening Script"
 )
 
@@ -107,6 +108,10 @@ for entry in "${SOURCES[@]}"; do
 
     base="$(basename "$src")"
     name="${base%.*}"
+    # A bare "README" would collide across folders — use the parent dir name.
+    if [ "$name" = "README" ]; then
+        name="$(basename "$(dirname "$src")")"
+    fi
     out="$OUT_DIR/$name.html"
 
     case "$base" in
