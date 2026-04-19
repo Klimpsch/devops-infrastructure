@@ -1,0 +1,16 @@
+# Logs & swap files
+*.log
+*.swp
+*.swo
+.*.kate-swp
+.DS_Store
+
+# Runtime artifacts from bsd_server_hardening.sh
+harden-backup-*/
+
+# Editor & IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db

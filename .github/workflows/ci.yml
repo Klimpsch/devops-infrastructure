@@ -1,0 +1,118 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Weekly, Monday 06:00 UTC — catch upstream package regressions
+    - cron: '0 6 * * 1'
+
+jobs:
+  # ─── Script quality ─────────────────────────────────────────────
+  shell-lint:
+    name: ShellCheck + shfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ShellCheck
+        uses: ludeeus/action-shellcheck@2.0.0
+        with:
+          severity: warning
+          scandir: ./
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - name: Install shfmt
+        run: go install mvdan.cc/sh/v3/cmd/shfmt@latest
+
+      - name: shfmt --diff
+        run: |
+          files=$(shfmt -f .)
+          [ -z "$files" ] && { echo "no shell files"; exit 0; }
+          shfmt -d -i 4 -ci $files
+
+  markdown-lint:
+    name: markdownlint + lychee
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: markdownlint
+        uses: DavidAnson/markdownlint-cli2-action@v16
+        with:
+          globs: "**/*.md"
+
+      - name: Link check (lychee)
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress
+            --exclude-mail
+            --exclude "your-domain\\.com"
+            --exclude "example\\.com"
+            **/*.md **/*.html
+          fail: true
+
+  # ─── Integration tests ──────────────────────────────────────────
+  ubuntu-workstation:
+    name: Ubuntu 24.04 — dev-workstation.sh
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:24.04
+      options: --user root
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prep container
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq sudo curl ca-certificates
+          useradd -m -G sudo tester
+          echo 'tester ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+      - name: Run dev-workstation.sh
+        run: |
+          chmod +x scripts/dev-workstation.sh
+          su tester -c "cd $GITHUB_WORKSPACE && bash scripts/dev-workstation.sh"
+
+      - name: Verify tools installed
+        run: |
+          set -e
+          fail=0
+          for bin in git node rg fd nvim tmux jq bat; do
+            if command -v "$bin" >/dev/null; then
+              echo "  ok  $bin"
+            else
+              echo "  MISSING  $bin"; fail=1
+            fi
+          done
+          [ "$fail" -eq 0 ]
+
+  freebsd-hardening:
+    name: FreeBSD 14 — bsd_server_hardening.sh
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run hardening inside FreeBSD VM
+        uses: vmactions/freebsd-vm@v1
+        with:
+          release: '14.1'
+          usesh: true
+          prepare: |
+            pw useradd admin -m -s /bin/sh
+          run: |
+            set -eu
+            chmod +x scripts/bsd_server_hardening.sh
+            ADMIN_USER=admin ALLOW_FROM=any sh scripts/bsd_server_hardening.sh
+
+            echo "--- Post-run assertions ---"
+            grep -q '^PermitRootLogin no'        /etc/ssh/sshd_config && echo "  ok  SSH root login disabled"
+            grep -q '^PasswordAuthentication no' /etc/ssh/sshd_config && echo "  ok  SSH password auth disabled"
+            grep -q '^admin' /etc/passwd                               && echo "  ok  admin user exists"
+            service sshd status                                        && echo "  ok  sshd running"
