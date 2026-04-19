@@ -411,3 +411,27 @@ trusted (active)
 | RDP with video | 1-5 GB (avoid) |
 
 Use SSH for most things, RDP only when GUI is necessary.
+
+---
+
+## Verification
+
+Three screenshots from a working lab tunnel, captured at the three layers worth checking after a bring-up:
+
+### 1. Tunnel active on the Windows client
+
+![WireGuard Windows client showing the tunnel active with recent handshake](../guide_images/fedora-windows-wireguard/wireguard-tunnel.png)
+
+The Windows WireGuard UI after activating the tunnel. Look for a recent *Latest handshake* (within the last 2 minutes) and non-zero *Transfer* — that confirms the server responded and bidirectional traffic is flowing.
+
+### 2. Interface state on the Fedora server
+
+![ip / wg output on Fedora showing wg0 up with peer endpoint and transfer counters](../guide_images/fedora-windows-wireguard/wireguard-interfaces.png)
+
+`ip addr show wg0` and `sudo wg` on the server side. `wg0` carries `10.10.10.1/24`, the peer's public key and endpoint (the client's public IP) are listed, and `latest handshake` matches what the client is reporting.
+
+### 3. Encrypted traffic on the physical NIC
+
+![tcpdump on the WAN interface showing only UDP/51820, no plaintext SSH](../guide_images/fedora-windows-wireguard/tcp-dump-eth-adaptor-wireguard.png)
+
+`sudo tcpdump -i <wan-iface> -n host <client-public-ip>` during an SSH session over the tunnel. All traffic is UDP/51820 — no TCP/22 packets visible on the physical interface. This is the proof that SSH is genuinely inside the tunnel rather than leaking onto the LAN.

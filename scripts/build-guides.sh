@@ -28,7 +28,12 @@ SOURCES=(
     "devops_guides/wireguard-ubuntu-quick.md|WireGuard: Ubuntu ↔ Windows (Quick)"
     "devops_guides/port-forwarding-guide.md|firewalld Port Forwarding: Host → VM"
     "devops_guides/Samba-Setup-for-Windows-on-KVM.md|Samba Share: Fedora Host ↔ Windows KVM"
-    "devops_guides/AD_Exc_setup.md|Windows AD + Exchange Lab on KVM"
+    "devops_guides/kvm-active-directory.md|KVM + Active Directory"
+    "devops_guides/kvm-exchange.md|KVM + Exchange"
+    "devops_guides/active-directory-patching.md|AD: Monthly Patching (Two-DC)"
+    "devops_guides/active-directory-shutdown.md|AD: Shutdown Playbook (Two-DC)"
+    "devops_guides/exchange-cu-upgrade.md|Exchange DAG: CU / SU Upgrade"
+    "devops_guides/exchange-shutdown.md|Exchange DAG: Shutdown Playbook"
     "observability/README.md|Observability Stack: Grafana + InfluxDB + Telegraf"
     "scripts/Fedora-Server-Hardening-script.sh|Fedora 43 Server Hardening Script"
 )
