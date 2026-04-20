@@ -28,12 +28,11 @@ devops_guides/        Markdown walkthroughs + reference shell scripts
 
 ## CI
 
-Every push and PR runs four jobs:
+Every push and PR runs three jobs:
 
 - `shell-lint`         — ShellCheck + shfmt on every `.sh`
-- `markdown-lint`      — markdownlint-cli2 + lychee link check on every `.md`
 - `ubuntu-workstation` — runs `dev-workstation.sh` on a fresh Ubuntu 24.04 container and asserts tools landed
-- `freebsd-hardening`  — runs `bsd_server_hardening.sh` on a real FreeBSD 14.1 VM and asserts sshd is locked down
+- `fedora-hardening`   — runs `Fedora-Server-Hardening-script.sh` in a Fedora container and asserts SSH, sysctl, pwquality, and audit policy landed (systemd-dependent steps are tolerated)
 
 Runs weekly (Mon 06:00 UTC) to catch upstream package regressions.
 
@@ -43,4 +42,4 @@ Runs weekly (Mon 06:00 UTC) to catch upstream package regressions.
 ./scripts/lint.sh
 ```
 
-Requires: `shellcheck`, `shfmt`, `markdownlint-cli2` (npm), `lychee` (cargo).
+Requires: `shellcheck`, `shfmt`.

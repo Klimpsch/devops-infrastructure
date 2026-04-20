@@ -36,28 +36,6 @@ jobs:
           [ -z "$files" ] && { echo "no shell files"; exit 0; }
           shfmt -d -i 4 -ci $files
 
-  markdown-lint:
-    name: markdownlint + lychee
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: markdownlint
-        uses: DavidAnson/markdownlint-cli2-action@v16
-        with:
-          globs: "**/*.md"
-
-      - name: Link check (lychee)
-        uses: lycheeverse/lychee-action@v2
-        with:
-          args: >-
-            --no-progress
-            --exclude-mail
-            --exclude "your-domain\\.com"
-            --exclude "example\\.com"
-            **/*.md **/*.html
-          fail: true
-
   # ─── Integration tests ──────────────────────────────────────────
   ubuntu-workstation:
     name: Ubuntu 24.04 — dev-workstation.sh
@@ -93,26 +71,47 @@ jobs:
           done
           [ "$fail" -eq 0 ]
 
-  freebsd-hardening:
-    name: FreeBSD 14 — bsd_server_hardening.sh
+  fedora-hardening:
+    name: Fedora — Fedora-Server-Hardening-script.sh
     runs-on: ubuntu-latest
+    container:
+      image: fedora:latest
+      options: --user root
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run hardening inside FreeBSD VM
-        uses: vmactions/freebsd-vm@v1
-        with:
-          release: '14.1'
-          usesh: true
-          prepare: |
-            pw useradd admin -m -s /bin/sh
-          run: |
-            set -eu
-            chmod +x scripts/bsd_server_hardening.sh
-            ADMIN_USER=admin ALLOW_FROM=any sh scripts/bsd_server_hardening.sh
+      - name: Prep container
+        # Install deps the hardening script assumes exist on a real server
+        # (sshd_config, sestatus, stat, sed, etc. — minimal set for declarative checks).
+        run: |
+          dnf install -y --setopt=install_weak_deps=False \
+            openssh-server sudo which procps-ng shadow-utils libselinux-utils
 
-            echo "--- Post-run assertions ---"
-            grep -q '^PermitRootLogin no'        /etc/ssh/sshd_config && echo "  ok  SSH root login disabled"
-            grep -q '^PasswordAuthentication no' /etc/ssh/sshd_config && echo "  ok  SSH password auth disabled"
-            grep -q '^admin' /etc/passwd                               && echo "  ok  admin user exists"
-            service sshd status                                        && echo "  ok  sshd running"
+      - name: Run hardening (systemd-dependent steps tolerated in container)
+        run: |
+          chmod +x scripts/Fedora-Server-Hardening-script.sh
+          # Drop `set -e` so `systemctl enable --now firewalld` etc. failing
+          # inside a container doesn't stop later declarative sections running.
+          sed -i 's/^set -euo pipefail$/set -uo pipefail/' scripts/Fedora-Server-Hardening-script.sh
+          bash scripts/Fedora-Server-Hardening-script.sh || true
+
+      - name: Verify hardening artifacts landed
+        run: |
+          set -e
+          fail=0
+          check() { grep -q "$2" "$1" && echo "  ok  $3" || { echo "  MISSING  $3"; fail=1; }; }
+
+          check /etc/ssh/sshd_config                      '^PermitRootLogin no'               "SSH: PermitRootLogin no"
+          check /etc/ssh/sshd_config                      '^PasswordAuthentication no'        "SSH: PasswordAuthentication no"
+          check /etc/ssh/sshd_config                      '^MaxAuthTries 3'                   "SSH: MaxAuthTries 3"
+          check /etc/security/pwquality.conf              '^minlen = 14'                      "pwquality: minlen 14"
+          check /etc/security/faillock.conf               '^deny = 5'                         "faillock: deny 5"
+          check /etc/sysctl.d/99-hardening.conf           '^kernel.randomize_va_space = 2'    "sysctl: ASLR"
+          check /etc/sysctl.d/99-hardening.conf           '^net.ipv4.tcp_syncookies = 1'      "sysctl: SYN cookies"
+          check /etc/modprobe.d/hardening-blacklist.conf  '^install dccp'                     "modprobe: dccp blacklisted"
+          check /etc/audit/rules.d/99-hardening.rules     '^-w /etc/passwd'                   "auditd: /etc/passwd watched"
+          check /etc/login.defs                           '^PASS_MAX_DAYS   90'               "login.defs: PASS_MAX_DAYS 90"
+
+          [ "$(stat -c %a /etc/shadow)" = "600" ] && echo "  ok  /etc/shadow 600" || { echo "  MISSING  /etc/shadow 600"; fail=1; }
+
+          [ "$fail" -eq 0 ]

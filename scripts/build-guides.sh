@@ -34,8 +34,10 @@ SOURCES=(
     "devops_guides/active-directory-shutdown.md|AD: Shutdown Playbook (Two-DC)"
     "devops_guides/exchange-cu-upgrade.md|Exchange DAG: CU / SU Upgrade"
     "devops_guides/exchange-shutdown.md|Exchange DAG: Shutdown Playbook"
+    "devops_guides/cml-ospf-triangle-lab.md|CML + OSPF Triangle Lab"
     "observability/README.md|Observability Stack: Grafana + InfluxDB + Telegraf"
     "scripts/Fedora-Server-Hardening-script.sh|Fedora 43 Server Hardening Script"
+    "scripts/CML_OSPF_Basic_conf.py|CML + OSPF Lab Creator (Python)"
 )
 
 render_html_shell() {
@@ -129,3 +131,24 @@ done
 
 echo ""
 echo "Built $count guides in $OUT_DIR"
+
+# Mirror the rebuilt site into the deploy bundle at production/ if it exists.
+# (Skipped automatically when the script is run from a fresh git checkout
+# that doesn't have a production/ folder alongside.)
+PROD_DIR="$SITE_ROOT/production"
+if [ -d "$PROD_DIR/guides" ]; then
+    echo ""
+    echo "==> Mirroring to $PROD_DIR/"
+    cp "$OUT_DIR"/*.html "$PROD_DIR/guides/" 2>/dev/null || true
+    [ -f "$OUT_DIR/guide.css" ] && cp "$OUT_DIR/guide.css" "$PROD_DIR/guides/"
+
+    if [ -d "$PROD_DIR/devops_guides" ] && [ -d "$SITE_ROOT/devops_guides" ]; then
+        cp "$SITE_ROOT/devops_guides"/*.md "$PROD_DIR/devops_guides/" 2>/dev/null || true
+    fi
+
+    if [ -d "$SITE_ROOT/guide_images" ] && [ -d "$PROD_DIR/guide_images" ]; then
+        cp -r "$SITE_ROOT/guide_images/." "$PROD_DIR/guide_images/"
+    fi
+
+    echo "   ok   guides/, devops_guides/, guide_images/ mirrored"
+fi
