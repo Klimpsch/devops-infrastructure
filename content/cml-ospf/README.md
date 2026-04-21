@@ -2,7 +2,7 @@
 
 Python automation that builds a 3-router OSPF triangle in Cisco Modeling Labs (CML 2.x) end-to-end: create the lab, drop in three IOSv routers, wire them in a triangle, push day-0 configs with OSPF area 0 on every link, and start the lab. One command, reproducible topology.
 
-Script: [`CML_OSPF_Basic_conf.py`](../scripts/CML_OSPF_Basic_conf.py)
+Script: [`CML_OSPF_Basic_conf.py`](CML_OSPF_Basic_conf.py)
 
 ## Topology
 
@@ -63,7 +63,7 @@ Verify once routers boot (~1-2 min):
 
 The lab appears in the CML UI with the three nodes laid out as a triangle:
 
-![CML workbench view after running the script](../guide_images/CML_Labs/OSPF-basic/Lab-setup-post-script.png)
+![CML workbench view after running the script](images/Lab-setup-post-script.png)
 
 ## What the script actually does
 
@@ -96,7 +96,7 @@ O    10.0.23.0/30 [110/2] via 10.0.12.2, ...
 
 End-to-end reachability across loopbacks confirms the control plane is working:
 
-![OSPF neighbors + routes on R1 after convergence](../guide_images/CML_Labs/OSPF-basic/OSPF-configmation-CML.png)
+![OSPF neighbors + routes on R1 after convergence](images/OSPF-configmation-CML.png)
 
 ## Extending the lab
 
@@ -106,7 +106,7 @@ Things to bolt on once the basic triangle is healthy:
 - **Authentication** — MD5 or SHA on each interface: `ip ospf authentication message-digest`.
 - **Timers** — dial down hello/dead for sub-second convergence; test with a link flap.
 - **BFD** — enable BFD on the links and have OSPF register for fast failure detection.
-- **Telemetry** — wire each router into the [observability stack](observability.md) via IOS-XR MDT (or SNMP for IOSv) and watch neighbor state flap in Grafana as you tear links down.
+- **Telemetry** — wire each router into the [observability stack](../../observability/README.md) via IOS-XR MDT (or SNMP for IOSv) and watch neighbor state flap in Grafana as you tear links down.
 
 ## Troubleshooting
 

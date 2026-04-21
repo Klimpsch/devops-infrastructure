@@ -1,6 +1,6 @@
 # KVM + Active Directory
 
-Single-forest Windows Server 2022 domain controller in a libvirt VM — the foundation half of the two-VM Windows lab. Pair with the [KVM + Exchange](kvm-exchange.md) guide for mail.
+Single-forest Windows Server 2022 domain controller in a libvirt VM — the foundation half of the two-VM Windows lab. Pair with the [KVM + Exchange](../kvm-exchange/README.md) guide for mail.
 
 ## Provision the VM
 
@@ -48,7 +48,7 @@ New-ItemProperty -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShell `
   -Value "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -PropertyType String -Force
 ```
 
-Same steps packaged as [`scripts/enable-ssh.ps1`](../scripts/enable-ssh.ps1).
+Same steps packaged as [`enable-ssh.ps1`](../windows-enable-ssh/enable-ssh.ps1).
 
 ## 3. Rename the computer
 

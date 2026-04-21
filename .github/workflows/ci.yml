@@ -38,7 +38,7 @@ jobs:
 
   # ─── Integration tests ──────────────────────────────────────────
   ubuntu-workstation:
-    name: Ubuntu 24.04 — dev-workstation.sh
+    name: Ubuntu 24.04 — content/dev-workstation-ubuntu/install.sh
     runs-on: ubuntu-latest
     container:
       image: ubuntu:24.04
@@ -55,8 +55,8 @@ jobs:
 
       - name: Run dev-workstation.sh
         run: |
-          chmod +x scripts/dev-workstation.sh
-          su tester -c "cd $GITHUB_WORKSPACE && bash scripts/dev-workstation.sh"
+          chmod +x content/dev-workstation-ubuntu/install.sh
+          su tester -c "cd $GITHUB_WORKSPACE && bash content/dev-workstation-ubuntu/install.sh"
 
       - name: Verify tools installed
         run: |
@@ -72,7 +72,7 @@ jobs:
           [ "$fail" -eq 0 ]
 
   fedora-hardening:
-    name: Fedora — Fedora-Server-Hardening-script.sh
+    name: Fedora — content/fedora-hardening/harden.sh
     runs-on: ubuntu-latest
     container:
       image: fedora:latest
@@ -89,11 +89,11 @@ jobs:
 
       - name: Run hardening (systemd-dependent steps tolerated in container)
         run: |
-          chmod +x scripts/Fedora-Server-Hardening-script.sh
+          chmod +x content/fedora-hardening/harden.sh
           # Drop `set -e` so `systemctl enable --now firewalld` etc. failing
           # inside a container doesn't stop later declarative sections running.
-          sed -i 's/^set -euo pipefail$/set -uo pipefail/' scripts/Fedora-Server-Hardening-script.sh
-          bash scripts/Fedora-Server-Hardening-script.sh || true
+          sed -i 's/^set -euo pipefail$/set -uo pipefail/' content/fedora-hardening/harden.sh
+          bash content/fedora-hardening/harden.sh || true
 
       - name: Verify hardening artifacts landed
         run: |

@@ -1,6 +1,6 @@
 # KVM + Exchange
 
-Exchange Server 2019 lab joined to the `lab.local` AD domain from the [KVM + Active Directory](kvm-active-directory.md) guide, with one mailbox database on a dedicated data disk and a couple of test mailboxes. Pure lab — not hardened, not supported sizing, but functional.
+Exchange Server 2019 lab joined to the `lab.local` AD domain from the [KVM + Active Directory](../kvm-active-directory/README.md) guide, with one mailbox database on a dedicated data disk and a couple of test mailboxes. Pure lab — not hardened, not supported sizing, but functional.
 
 ## Provision the VM
 
@@ -70,7 +70,7 @@ New-ItemProperty -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShell `
   -Value "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -PropertyType String -Force
 ```
 
-Same steps packaged as [`scripts/enable-ssh.ps1`](../scripts/enable-ssh.ps1).
+Same steps packaged as [`enable-ssh.ps1`](../windows-enable-ssh/enable-ssh.ps1).
 
 ## Step 1 — Install prerequisites
 
@@ -170,9 +170,9 @@ Connect-ExchangeServer -auto -Verbose
 
 The first dot-sources Exchange's bootstrap script (loads functions and aliases into the session); the second opens an implicit PowerShell remoting session to the local Exchange server, which is what actually exposes `Get-ExchangeServer`, `Get-Mailbox`, and the rest of the `*-Mailbox*` cmdlets.
 
-![SSH session into the Exchange server from the Fedora host](../guide_images/exchange_setup/ssh-into-exc-server.png)
+![SSH session into the Exchange server from the Fedora host](images/ssh-into-exc-server.png)
 
-![Running the two bootstrap commands loads the Exchange snap-in and Get-ExchangeServer returns a healthy response](../guide_images/exchange_setup/activate-ems-ssh.png)
+![Running the two bootstrap commands loads the Exchange snap-in and Get-ExchangeServer returns a healthy response](images/activate-ems-ssh.png)
 
 Put both lines at the top of `$PROFILE` on the Exchange box and every SSH session drops straight into a working EMS.
 
@@ -287,7 +287,7 @@ Get-Service MSExchange* | Where-Object Status -ne 'Stopped' | Stop-Service -Forc
 Stop-Computer -Force
 ```
 
-A more thorough version with dependency verification is packaged as [`scripts/shutdown-exchange.ps1`](../scripts/shutdown-exchange.ps1) — it also stops IIS, covers every MSExchange* service, and bails out early if any database fails to dismount.
+A more thorough version with dependency verification is packaged as [`shutdown-exchange.ps1`](../exchange-shutdown/shutdown-exchange.ps1) — it also stops IIS, covers every MSExchange* service, and bails out early if any database fails to dismount.
 
 ## Things you can lab next
 
@@ -331,6 +331,6 @@ New-Mailbox -Name "John Smith" -UserPrincipalName john.smith@lab.local -Alias jo
 
 If it returns a mailbox object with a populated `Database` and `ServerName`, Exchange is doing the work it's supposed to: creating the AD user, stamping the Exchange attributes, and provisioning the mailbox in the store.
 
-![New-Mailbox one-liner creating John Smith and returning a populated mailbox object in EMS](../guide_images/exchange_setup/oneshot-test-ex.png)
+![New-Mailbox one-liner creating John Smith and returning a populated mailbox object in EMS](images/oneshot-test-ex.png)
 
 Clean up with `Remove-Mailbox -Identity john.smith -Permanent $true -Confirm:$false` when you're done — `-Permanent` also deletes the backing AD user, so there's nothing to tidy up in ADUC afterwards.
